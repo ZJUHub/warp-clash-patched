@@ -35,4 +35,15 @@ def register(pubkey, privkey):
     resp = requests.post(url, headers=headers, data=json.dumps(data))
     resp.raise_for_status()
     return resp.json()
+
+# 补充原程序依赖的函数（可以先占位，避免报错）
+def updatePublicKey(*args, **kwargs):
+    return None
+
+def updateLicenseKey(*args, **kwargs):
+    return None
+
+def getAccount(*args, **kwargs):
+    return {}
+
 # trigger build
