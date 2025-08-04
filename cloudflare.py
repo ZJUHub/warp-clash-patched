@@ -10,6 +10,7 @@ class Account:
     def __init__(self, data):
         self.data = data
         self.usage = data.get("usage", 0)
+        self.license_key = data.get("license_key", "")
         self.path = "account/account.json"
         os.makedirs(os.path.dirname(self.path), exist_ok=True)
 
@@ -27,7 +28,18 @@ def get_available_api():
             continue
     return API_LIST[0]
 
-def register(pubkey=None, privkey=None, **kwargs):  # 接收额外参数如 referrer
+def fetch_account_details(account_id, access_token):
+    """获取完整账户详情"""
+    url = f"https://api.cloudflareclient.com/v0i2407010000/reg/{account_id}"
+    headers = {
+        "Authorization": f"Bearer {access_token}",
+        "User-Agent": "1.1.1.1/6.33 (Android; arm64-v8a; Android 13; Build/1234567)"
+    }
+    resp = requests.get(url, headers=headers)
+    resp.raise_for_status()
+    return resp.json()
+
+def register(pubkey=None, privkey=None, **kwargs):
     url = get_available_api()
     headers = {
         "Content-Type": "application/json; charset=UTF-8",
@@ -45,9 +57,22 @@ def register(pubkey=None, privkey=None, **kwargs):  # 接收额外参数如 refe
     }
     if "referrer" in kwargs:
         data["referrer"] = kwargs["referrer"]
+    # 第一步：注册
     resp = requests.post(url, headers=headers, data=json.dumps(data))
     resp.raise_for_status()
-    return Account(resp.json())
+    account_data = resp.json()
+
+    # 第二步：获取完整账号详情（包含 license_key、endpoint 等）
+    try:
+        account_id = account_data.get("id")
+        token = account_data.get("token")
+        if account_id and token:
+            detail_data = fetch_account_details(account_id, token)
+            account_data.update(detail_data)
+    except Exception as e:
+        print(f"Warning: failed to fetch full account details: {e}")
+
+    return Account(account_data)
 
 def updatePublicKey(*args, **kwargs): return None
 def updateLicenseKey(*args, **kwargs): return None
@@ -59,7 +84,7 @@ def getAccount(*args, **kwargs):
         return Account(data)
     return Account({})
 
-# 确保必要目录存在
 os.makedirs("config", exist_ok=True)
+
 
 # trigger build
