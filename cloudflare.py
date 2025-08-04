@@ -9,8 +9,12 @@ API_LIST = [
 class Account:
     def __init__(self, data):
         self.data = data
-        self.usage = data.get("usage", 0)
+        self.id = data.get("id", "")
+        self.token = data.get("token", "")
         self.license_key = data.get("license_key", "")
+        self.quota = data.get("quota", 0)
+        self.account_type = data.get("account_type", "free")
+        self.usage = data.get("usage", 0)
         self.path = "account/account.json"
         os.makedirs(os.path.dirname(self.path), exist_ok=True)
 
@@ -57,12 +61,13 @@ def register(pubkey=None, privkey=None, **kwargs):
     }
     if "referrer" in kwargs:
         data["referrer"] = kwargs["referrer"]
+
     # 第一步：注册
     resp = requests.post(url, headers=headers, data=json.dumps(data))
     resp.raise_for_status()
     account_data = resp.json()
 
-    # 第二步：获取完整账号详情（包含 license_key、endpoint 等）
+    # 第二步：获取完整账号详情
     try:
         account_id = account_data.get("id")
         token = account_data.get("token")
@@ -72,7 +77,10 @@ def register(pubkey=None, privkey=None, **kwargs):
     except Exception as e:
         print(f"Warning: failed to fetch full account details: {e}")
 
-    return Account(account_data)
+    # 创建账户对象并保存
+    acc = Account(account_data)
+    acc.save()
+    return acc
 
 def updatePublicKey(*args, **kwargs): return None
 def updateLicenseKey(*args, **kwargs): return None
