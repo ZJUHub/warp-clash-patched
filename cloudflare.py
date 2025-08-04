@@ -9,6 +9,7 @@ API_LIST = [
 class Account:
     def __init__(self, data):
         self.data = data
+        self.usage = data.get("usage", 0)
         self.path = "account/account.json"
         os.makedirs(os.path.dirname(self.path), exist_ok=True)
 
@@ -26,7 +27,7 @@ def get_available_api():
             continue
     return API_LIST[0]
 
-def register(pubkey, privkey):
+def register(pubkey=None, privkey=None, **kwargs):  # 接收额外参数如 referrer
     url = get_available_api()
     headers = {
         "Content-Type": "application/json; charset=UTF-8",
@@ -42,15 +43,14 @@ def register(pubkey, privkey):
         "type": "Android",
         "locale": "en_US"
     }
+    if "referrer" in kwargs:
+        data["referrer"] = kwargs["referrer"]
     resp = requests.post(url, headers=headers, data=json.dumps(data))
     resp.raise_for_status()
     return Account(resp.json())
 
-def updatePublicKey(*args, **kwargs):
-    return None
-
-def updateLicenseKey(*args, **kwargs):
-    return None
+def updatePublicKey(*args, **kwargs): return None
+def updateLicenseKey(*args, **kwargs): return None
 
 def getAccount(*args, **kwargs):
     if os.path.exists("account/account.json"):
@@ -58,5 +58,8 @@ def getAccount(*args, **kwargs):
             data = json.load(f)
         return Account(data)
     return Account({})
+
+# 确保必要目录存在
+os.makedirs("config", exist_ok=True)
 
 # trigger build
