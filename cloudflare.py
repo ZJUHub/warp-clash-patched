@@ -35,3 +35,4 @@ def register(pubkey, privkey):
     resp = requests.post(url, headers=headers, data=json.dumps(data))
     resp.raise_for_status()
     return resp.json()
+# trigger build
