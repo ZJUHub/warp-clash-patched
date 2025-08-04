@@ -6,6 +6,16 @@ API_LIST = [
     "https://api.cloudflareclient.com/v0i2405010000/reg"
 ]
 
+class Account:
+    def __init__(self, data):
+        self.data = data
+        self.path = "account/account.json"
+        os.makedirs(os.path.dirname(self.path), exist_ok=True)
+
+    def save(self):
+        with open(self.path, "w") as f:
+            json.dump(self.data, f)
+
 def get_available_api():
     for url in API_LIST:
         try:
@@ -34,9 +44,8 @@ def register(pubkey, privkey):
     }
     resp = requests.post(url, headers=headers, data=json.dumps(data))
     resp.raise_for_status()
-    return resp.json()
+    return Account(resp.json())
 
-# 补充原程序依赖的函数（可以先占位，避免报错）
 def updatePublicKey(*args, **kwargs):
     return None
 
@@ -44,6 +53,10 @@ def updateLicenseKey(*args, **kwargs):
     return None
 
 def getAccount(*args, **kwargs):
-    return {}
+    if os.path.exists("account/account.json"):
+        with open("account/account.json") as f:
+            data = json.load(f)
+        return Account(data)
+    return Account({})
 
 # trigger build
